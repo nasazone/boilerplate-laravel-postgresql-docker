@@ -1,0 +1,49 @@
+version: "3.9"
+volumes:
+  php-fpm-socket:
+  db-store:
+  psysh-store:
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    container_name: contact_app
+    volumes:
+      - type: volume
+        source: php-fpm-socket
+        target: /var/run/php-fpm
+        volume:
+          nocopy: true
+      - type: bind
+        source: ./
+        target: /work/contact
+      - type: volume
+        source: psysh-store
+        target: /root/.config/psysh
+        volume:
+          nocopy: true
+    networks:
+      - contact-network
+  nginx:
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
+    container_name: contact_nginx
+    ports:
+      - target: 80
+        published: 82
+    volumes:
+      - type: volume
+        source: php-fpm-socket
+        target: /var/run/php-fpm
+        volume:
+          nocopy: true
+      - type: bind
+        source: ./
+        target: /work/contact
+    networks:
+      - contact-network
+networks:
+  contact-network:
+    driver: bridge
